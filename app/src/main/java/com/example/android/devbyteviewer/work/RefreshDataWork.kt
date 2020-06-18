@@ -16,3 +16,38 @@
  */
 
 package com.example.android.devbyteviewer.work
+
+import android.content.Context
+import androidx.work.CoroutineWorker
+import androidx.work.WorkerParameters
+import com.example.android.devbyteviewer.database.getDatabase
+import com.example.android.devbyteviewer.repository.VideosRepository
+import retrofit2.HttpException
+
+//work manager class that does work on background thread
+class RefreshDataWork(appContext: Context, params: WorkerParameters):
+        CoroutineWorker(appContext, params){
+    companion object{
+        const val WORK_NAME = "RefreshDataWorker"
+    }
+    //doWork runs on background thread so it does not block the ui
+    override suspend fun doWork(): Payload {
+
+        //get the database
+        val database = getDatabase(applicationContext)
+        //get the repository
+        val repository = VideosRepository(database)
+
+        return try {
+            //refresh the videos
+            repository.refreshVideos()
+            //tell work manager it succeeds
+            Payload(Result.SUCCESS)
+
+        } catch (exception: HttpException){
+            //if the work fails, retry
+            Payload(Result.RETRY)
+        }
+
+    }
+}

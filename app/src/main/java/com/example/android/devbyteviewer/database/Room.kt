@@ -16,3 +16,36 @@
  */
 
 package com.example.android.devbyteviewer.database
+
+import android.content.Context
+import androidx.lifecycle.LiveData
+
+import androidx.room.*
+
+@Dao
+interface VideoDao {
+    @Query("SELECT * FROM databasevideo")
+    fun getVideos(): LiveData<List<DatabaseVideo>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun inserAll(vararg videos: DatabaseVideo)
+
+}
+
+//database
+@Database(entities = [DatabaseVideo::class], version = 1)
+abstract class VideoDatabase : RoomDatabase() {
+    abstract val videoDao: VideoDao
+}
+
+private lateinit var INSTANCE: VideoDatabase
+fun getDatabase(context: Context): VideoDatabase {
+    //check if instance is initialised
+    if (!::INSTANCE.isInitialized) {
+        INSTANCE = Room.databaseBuilder(context.applicationContext,
+                VideoDatabase::class.java,
+                "videos").build()
+
+    }
+    return INSTANCE
+}
